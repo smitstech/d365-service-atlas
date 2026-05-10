@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Build the zip without creating a release'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  package:
+    name: Package and release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read manifest version
+        id: manifest
+        run: |
+          set -euo pipefail
+          version=$(jq -r '.version' extension/manifest.json)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Manifest version: $version"
+
+      - name: Verify tag matches manifest version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF#refs/tags/v}"
+          version="${{ steps.manifest.outputs.version }}"
+          if [ "$tag" != "$version" ]; then
+            echo "::error::Tag v$tag does not match manifest version $version. Bump extension/manifest.json before tagging." >&2
+            exit 1
+          fi
+
+      - name: Build zip
+        id: build
+        run: |
+          set -euo pipefail
+          version="${{ steps.manifest.outputs.version }}"
+          name="d365-service-atlas-${version}.zip"
+          mkdir -p dist
+          (cd extension && zip -qr "../dist/${name}" . -x "*.DS_Store")
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "path=dist/$name" >> "$GITHUB_OUTPUT"
+          ls -lh "dist/${name}"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.build.outputs.name }}
+          path: ${{ steps.build.outputs.path }}
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.build.outputs.path }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false

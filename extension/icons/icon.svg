@@ -1,0 +1,10 @@
+<svg viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="D365 Service Atlas compass mark">
+  <rect width="128" height="128" rx="24" fill="#163a5c"/>
+  <circle cx="64" cy="64" r="44" fill="none" stroke="#d8f1ff" stroke-width="5" opacity="0.82"/>
+  <polygon points="64,18 82,64 64,64" fill="#ffffff"/>
+  <polygon points="64,18 46,64 64,64" fill="#dff5ff"/>
+  <polygon points="64,64 82,64 64,110" fill="#86d9ff"/>
+  <polygon points="64,64 46,64 64,110" fill="#4cb7e8"/>
+  <circle cx="64" cy="64" r="8" fill="#163a5c" stroke="#ffffff" stroke-width="3"/>
+  <circle cx="64" cy="64" r="2.5" fill="#ffffff"/>
+</svg>

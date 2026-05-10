@@ -1,0 +1,70 @@
+name: Bug report
+description: Something isn't working as expected.
+title: '[bug] '
+labels: ['bug', 'needs-triage']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a report. The more detail you provide, the faster we can fix it.
+
+        **Security issues:** please **do not** open a public issue. See [SECURITY.md](../SECURITY.md) instead.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of what went wrong.
+      placeholder: When I clicked the OpenAPI export on the FleetServices group, the file downloaded but was empty.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps. Include the service group / operation name if relevant.
+      placeholder: |
+        1. Open https://myenv.operations.dynamics.com/...
+        2. Click the extension icon.
+        3. Click "FleetServices".
+        4. Click "↓ OpenAPI".
+    validations:
+      required: true
+  - type: input
+    id: extension-version
+    attributes:
+      label: Extension version
+      description: From `chrome://extensions` or the side panel.
+      placeholder: 1.0.0.0
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+      placeholder: Chrome 142 / Edge 142 / Brave 1.71
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: macOS 15.0 / Windows 11 / Ubuntu 24.04
+    validations:
+      required: true
+  - type: textarea
+    id: console
+    attributes:
+      label: Console errors (if any)
+      description: Right-click the side panel → **Inspect** → Console tab. Paste anything red.
+      render: shell
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Screenshots, recordings, related issues, hunches.

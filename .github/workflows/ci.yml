@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Lint and format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prettier formatting check
+        run: npm run format:check
+
+      - name: ESLint
+        run: npm run lint
+
+  validate:
+    name: Validate extension
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate JSON files in extension/
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            echo "Validating $file"
+            jq empty "$file"
+          done < <(find extension -type f -name '*.json' -print0)
+
+      - name: Check required manifest fields
+        run: |
+          set -euo pipefail
+          jq -e '.manifest_version == 3' extension/manifest.json > /dev/null
+          jq -e '.name | length > 0' extension/manifest.json > /dev/null
+          jq -e '.version | test("^[0-9]+(\\.[0-9]+){0,3}$")' extension/manifest.json > /dev/null
+          jq -e '.description | length > 0 and length <= 132' extension/manifest.json > /dev/null
+          jq -e '.icons["16"] and .icons["48"] and .icons["128"]' extension/manifest.json > /dev/null
+          echo "manifest.json looks good."
+
+      - name: Verify icon files exist
+        run: |
+          set -euo pipefail
+          for size in 16 32 48 128; do
+            path=$(jq -r ".icons[\"${size}\"] // empty" extension/manifest.json)
+            if [ -n "$path" ] && [ ! -f "extension/$path" ]; then
+              echo "Missing icon referenced by manifest: extension/$path" >&2
+              exit 1
+            fi
+          done
+
+      - name: Dry-run package zip
+        run: |
+          set -euo pipefail
+          version=$(jq -r '.version' extension/manifest.json)
+          mkdir -p dist
+          (cd extension && zip -qr "../dist/d365-service-atlas-${version}.zip" . -x "*.DS_Store")
+          ls -lh dist/

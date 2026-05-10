@@ -1,0 +1,27 @@
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*~
+
+# Build output
+dist/
+*.zip
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# ESLint cache
+.eslintcache
+
+# Environment
+.env
+.env.local
+
+# Local Claude/agent settings
+.claude/settings.local.json

@@ -1,0 +1,32 @@
+{
+  "name": "d365-service-atlas",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Chrome side-panel extension for browsing Dynamics 365 Finance & Operations service groups, services, operations, and types.",
+  "license": "MIT",
+  "author": "Smits Technologies",
+  "homepage": "https://github.com/smitstech/d365-service-atlas#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/smitstech/d365-service-atlas.git"
+  },
+  "bugs": {
+    "url": "https://github.com/smitstech/d365-service-atlas/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^10.0.1",
+    "globals": "^15.14.0",
+    "prettier": "^3.4.2"
+  }
+}

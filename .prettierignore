@@ -1,0 +1,9 @@
+dist/
+node_modules/
+*.zip
+
+# Binary assets
+extension/icons/
+
+# Lockfile is generated
+package-lock.json
