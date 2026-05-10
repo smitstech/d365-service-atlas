@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.0.1.0] - 2026-05-10
+
+### Added
+
+- Support for Cloud Hosted Environments (`*.axcloud.dynamics.com`) — Tier-2+ developer and sandbox boxes provisioned through Lifecycle Services.
+
+### Changed
+
+- The `env` identifier is now the full hostname rather than the subdomain prefix, so URL builders (`servicesUrl`, `wsdlUrl`, `operationUrl`, OpenAPI `servers[].url`) work uniformly across both D365 F&O host patterns.
+
 ## [1.0.0.0] - 2026-05-10
 
 ### Added
