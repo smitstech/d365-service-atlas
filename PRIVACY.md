@@ -13,16 +13,16 @@ D365 Service Atlas is a Chrome extension that helps developers browse and inspec
 
 ## What the extension accesses
 
-| Data                                                                    | Why                                                                                        | Where it goes                                                                                                                                                                       |
-| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The URL of your active tab                                              | To detect which Dynamics 365 environment you're on (e.g. `myenv.operations.dynamics.com`). | Stays in the browser. Used only to construct API URLs.                                                                                                                              |
-| Your authenticated session cookies for `*.operations.dynamics.com`      | To make requests to the service catalog and service metadata endpoints on your behalf.     | Sent only to your own D365 environment, exactly as your browser would when you visit pages in that tab.                                                                             |
-| Service catalog and service metadata fetched from your D365 environment | To render the UI (service groups, operations, schemas, etc.).                              | Held in memory in the extension while the side panel is open. Cached for the duration of the side-panel session and discarded when the panel is closed or the browser is restarted. |
-| Files you download (OpenAPI JSON exports)                               | Generated locally from the metadata above when you click the export button.                | Saved to your computer via the standard browser download flow. Not transmitted anywhere.                                                                                            |
+| Data                                                                                            | Why                                                                                                                        | Where it goes                                                                                                                                                                       |
+| ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The URL of your active tab                                                                      | To detect which Dynamics 365 environment you're on (e.g. `myenv.operations.dynamics.com` or `myenv.axcloud.dynamics.com`). | Stays in the browser. Used only to construct API URLs.                                                                                                                              |
+| Your authenticated session cookies for `*.operations.dynamics.com` and `*.axcloud.dynamics.com` | To make requests to the service catalog and service metadata endpoints on your behalf.                                     | Sent only to your own D365 environment, exactly as your browser would when you visit pages in that tab.                                                                             |
+| Service catalog and service metadata fetched from your D365 environment                         | To render the UI (service groups, operations, schemas, etc.).                                                              | Held in memory in the extension while the side panel is open. Cached for the duration of the side-panel session and discarded when the panel is closed or the browser is restarted. |
+| Files you download (OpenAPI JSON exports)                                                       | Generated locally from the metadata above when you click the export button.                                                | Saved to your computer via the standard browser download flow. Not transmitted anywhere.                                                                                            |
 
 ## What the extension does not do
 
-- It does not read or modify pages on `*.operations.dynamics.com` or any other site.
+- It does not read or modify pages on `*.operations.dynamics.com`, `*.axcloud.dynamics.com`, or any other site.
 - It does not store browsing history.
 - It does not record what you click, search, or copy inside the extension.
 - It does not contact any server other than the Dynamics 365 environment you are already signed into.
@@ -34,7 +34,8 @@ The extension requests these Chrome permissions:
 
 - **`activeTab`** — to read the URL of the currently focused tab so it can detect your D365 environment.
 - **`sidePanel`** — to render its UI in Chrome's side panel.
-- **`host_permissions: https://*.operations.dynamics.com/*`** — to fetch the service catalog and service metadata from your D365 environment using your existing session cookies.
+- **`host_permissions: https://*.operations.dynamics.com/*`** — to fetch the service catalog and service metadata from production / standard sandbox D365 F&O environments using your existing session cookies.
+- **`host_permissions: https://*.axcloud.dynamics.com/*`** — same as above, for Cloud Hosted Environments (Tier-2+ developer / sandbox boxes provisioned through Lifecycle Services).
 
 No other permissions are requested.
 
