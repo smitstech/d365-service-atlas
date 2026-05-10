@@ -47,12 +47,12 @@ The extension only activates on Dynamics 365 F&O tabs and uses your existing log
 
 ## Permissions
 
-| Permission                                              | Why it's needed                                                                                                                            |
-| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `activeTab`                                             | Read the active tab's URL to detect which D365 environment you're on.                                                                      |
-| `sidePanel`                                             | Render the extension UI in Chrome's side panel.                                                                                            |
+| Permission                                              | Why it's needed                                                                                                                              |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `activeTab`                                             | Read the active tab's URL to detect which D365 environment you're on.                                                                        |
+| `sidePanel`                                             | Render the extension UI in Chrome's side panel.                                                                                              |
 | `host_permissions: https://*.operations.dynamics.com/*` | Fetch the service catalog and service metadata from production / standard sandbox D365 F&O environments using your existing session cookies. |
-| `host_permissions: https://*.axcloud.dynamics.com/*`    | Same as above, for Cloud Hosted Environments (Tier-2+ developer / sandbox boxes provisioned through Lifecycle Services).                   |
+| `host_permissions: https://*.axcloud.dynamics.com/*`    | Same as above, for Cloud Hosted Environments (Tier-2+ developer / sandbox boxes provisioned through Lifecycle Services).                     |
 
 The extension makes **no other network requests** — no telemetry, no analytics, no third-party services.
 
