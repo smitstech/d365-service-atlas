@@ -1,7 +1,7 @@
 import { buildJsonExample } from './json-example.js';
 
 export function operationUrl(env, group, op) {
-  return `https://${env}.operations.dynamics.com/api/services/${group}/${op.serviceName}/${op.name}`;
+  return `https://${env}/api/services/${group}/${op.serviceName}/${op.name}`;
 }
 
 export function curlSnippet(op, parsed, env, group) {
