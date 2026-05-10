@@ -1,0 +1,24 @@
+title: D365 Service Atlas
+description: Chrome side-panel extension for browsing Dynamics 365 Finance & Operations service groups, services, operations, and types.
+theme: jekyll-theme-cayman
+url: https://smitstech.github.io
+baseurl: /d365-service-atlas
+
+show_downloads: false
+github:
+  is_project_page: true
+
+# Pages built from this repo serves the project documentation only.
+# The extension source, dev tooling, and meta files don't need to ship.
+exclude:
+  - extension/
+  - node_modules/
+  - dist/
+  - .github/
+  - package.json
+  - package-lock.json
+  - eslint.config.mjs
+  - .prettierrc.json
+  - .prettierignore
+  - .gitignore
+  - PULL_REQUEST_TEMPLATE.md
