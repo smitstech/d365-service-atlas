@@ -1,5 +1,6 @@
 import {
   detectEnv,
+  envShortName,
   fetchServiceGroups,
   fetchWsdlText,
   NotSignedInError,
@@ -55,13 +56,13 @@ function setSearchHint(text) {
 }
 
 function setEnvironment(env) {
-  titleMarkEl.title = env ? `Environment: ${env}.operations.dynamics.com` : '';
+  titleMarkEl.title = env ? `Environment: ${env}` : '';
 }
 
 function updateSearchPlaceholder() {
   if (!allGroups.length) {
     searchEl.placeholder = currentEnv
-      ? `Search services in ${currentEnv}...`
+      ? `Search services in ${envShortName(currentEnv)}...`
       : 'Search service groups...';
     return;
   }

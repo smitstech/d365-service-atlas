@@ -9,7 +9,7 @@ A Chrome side-panel extension for browsing and inspecting **Microsoft Dynamics 3
 
 ## What it does
 
-When you open the side panel on a `*.operations.dynamics.com` tab, the extension reads the environment from the URL and uses your existing browser session to:
+When you open the side panel on a Dynamics 365 F&O tab (`*.operations.dynamics.com` for production / standard sandboxes, or `*.axcloud.dynamics.com` for Cloud Hosted Environments), the extension reads the environment from the URL and uses your existing browser session to:
 
 - List every **service group** exposed by that environment.
 - Drill into a group to see its **services and operations** (`POST /api/services/<group>/<service>/<op>`).
@@ -38,7 +38,7 @@ The D365 Service Atlas icon will appear in your toolbar. Pin it for easy access.
 
 ## Usage
 
-1. Open any `*.operations.dynamics.com` tab and sign in normally.
+1. Open any Dynamics 365 F&O tab (`*.operations.dynamics.com` or `*.axcloud.dynamics.com`) and sign in normally.
 2. Click the **D365 Service Atlas** icon — the side panel opens.
 3. The list of service groups loads automatically. Click one to drill in, or start typing to search.
 4. From an operation page, use the **curl** / **fetch** buttons in the header to copy a ready-to-run snippet, or use **↓ OpenAPI** on a service-group page to download the whole group as OpenAPI 3.0 JSON.
@@ -47,11 +47,12 @@ The extension only activates on Dynamics 365 F&O tabs and uses your existing log
 
 ## Permissions
 
-| Permission                                              | Why it's needed                                                                                                |
-| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `activeTab`                                             | Read the active tab's URL to detect which D365 environment you're on.                                          |
-| `sidePanel`                                             | Render the extension UI in Chrome's side panel.                                                                |
-| `host_permissions: https://*.operations.dynamics.com/*` | Fetch the service catalog and service metadata from your D365 environment using your existing session cookies. |
+| Permission                                              | Why it's needed                                                                                                                              |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `activeTab`                                             | Read the active tab's URL to detect which D365 environment you're on.                                                                        |
+| `sidePanel`                                             | Render the extension UI in Chrome's side panel.                                                                                              |
+| `host_permissions: https://*.operations.dynamics.com/*` | Fetch the service catalog and service metadata from production / standard sandbox D365 F&O environments using your existing session cookies. |
+| `host_permissions: https://*.axcloud.dynamics.com/*`    | Same as above, for Cloud Hosted Environments (Tier-2+ developer / sandbox boxes provisioned through Lifecycle Services).                     |
 
 The extension makes **no other network requests** — no telemetry, no analytics, no third-party services.
 

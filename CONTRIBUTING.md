@@ -22,7 +22,7 @@ The extension itself has no runtime build step — it's plain ES modules loaded 
 3. Open `chrome://extensions` in Chrome (or any Chromium-based browser).
 4. Enable **Developer mode**.
 5. Click **Load unpacked** and select the `extension/` folder.
-6. Open a `*.operations.dynamics.com` tab and click the toolbar icon to open the side panel.
+6. Open a Dynamics 365 F&O tab (`*.operations.dynamics.com` or `*.axcloud.dynamics.com`) and click the toolbar icon to open the side panel.
 
 After editing a file, click **Reload** on the extension's card in `chrome://extensions` and reopen the side panel.
 

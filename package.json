@@ -1,11 +1,11 @@
 {
   "name": "d365-service-atlas",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Chrome side-panel extension for browsing Dynamics 365 Finance & Operations service groups, services, operations, and types.",
   "license": "MIT",
   "author": "Smits Technologies",
-  "homepage": "https://github.com/smitstech/d365-service-atlas#readme",
+  "homepage": "https://smitstech.github.io/d365-service-atlas/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/smitstech/d365-service-atlas.git"

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "D365 Service Atlas",
-  "version": "1.0.0.0",
+  "version": "1.0.1.0",
   "description": "Browse and inspect Dynamics 365 Finance & Operations service groups, operations, and types.",
   "icons": {
     "16": "icons/icon-16.png",
@@ -24,5 +24,5 @@
     "service_worker": "background.js"
   },
   "permissions": ["activeTab", "sidePanel"],
-  "host_permissions": ["https://*.operations.dynamics.com/*"]
+  "host_permissions": ["https://*.operations.dynamics.com/*", "https://*.axcloud.dynamics.com/*"]
 }

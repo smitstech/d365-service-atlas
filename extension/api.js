@@ -1,12 +1,16 @@
-const HOST_RE = /^([^.]+)\.operations\.dynamics\.com$/;
+const HOST_RE = /^[^.]+\.(operations|axcloud)\.dynamics\.com$/;
 
 export function envFromUrl(url) {
   try {
-    const m = HOST_RE.exec(new URL(url).hostname);
-    return m?.[1] ?? null;
+    const { hostname } = new URL(url);
+    return HOST_RE.test(hostname) ? hostname : null;
   } catch {
     return null;
   }
+}
+
+export function envShortName(env) {
+  return env ? env.split('.')[0] : '';
 }
 
 export async function detectEnv() {
@@ -15,11 +19,11 @@ export async function detectEnv() {
 }
 
 export function servicesUrl(env) {
-  return `https://${env}.operations.dynamics.com/api/services`;
+  return `https://${env}/api/services`;
 }
 
 export function wsdlUrl(env, groupName) {
-  return `https://${env}.operations.dynamics.com/soap/services/${encodeURIComponent(groupName)}?singleWsdl`;
+  return `https://${env}/soap/services/${encodeURIComponent(groupName)}?singleWsdl`;
 }
 
 export class HttpError extends Error {

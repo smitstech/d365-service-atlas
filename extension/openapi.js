@@ -180,7 +180,7 @@ export function buildOpenApi(parsed, group, env) {
       version: '1.0.0',
       description: `Generated from D365 F&O service group ${group} on ${env}.`,
     },
-    servers: [{ url: `https://${env}.operations.dynamics.com/api/services/${group}` }],
+    servers: [{ url: `https://${env}/api/services/${group}` }],
     paths,
     components: { schemas },
   };
