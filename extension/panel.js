@@ -24,7 +24,7 @@ const titleMarkEl = document.querySelector('.title-mark');
 
 let allGroups = [];
 let currentEnv = null;
-let operationIndex = null;
+let searchIndex = null;
 let indexingPromise = null;
 let renderSeq = 0;
 let searchTimer = null;
@@ -63,10 +63,10 @@ function updateSearchPlaceholder() {
   if (!allGroups.length) {
     searchEl.placeholder = currentEnv
       ? `Search services in ${envShortName(currentEnv)}...`
-      : 'Search service groups...';
+      : 'Search groups, operations, types...';
     return;
   }
-  searchEl.placeholder = `Search ${allGroups.length} service groups...`;
+  searchEl.placeholder = `Search ${allGroups.length} groups, operations, types...`;
 }
 
 function downloadJson(filename, data) {
@@ -176,8 +176,9 @@ async function getParsedGroup(groupName) {
 
 const INDEX_CONCURRENCY = 6;
 
-async function buildOperationIndex() {
-  const out = [];
+async function buildSearchIndex() {
+  const operations = [];
+  const types = [];
   const total = allGroups.length;
   let cursor = 0;
   let done = 0;
@@ -189,11 +190,20 @@ async function buildOperationIndex() {
       try {
         const parsed = await getParsedGroup(g.Name);
         for (const op of parsed.operations) {
-          out.push({
+          operations.push({
             groupName: g.Name,
             serviceName: op.serviceName,
             opName: op.name,
             op,
+          });
+        }
+        for (const [typeClark, typeDef] of Object.entries(parsed.types)) {
+          if (typeDef.kind !== 'enum' && typeDef.kind !== 'complex') continue;
+          types.push({
+            groupName: g.Name,
+            typeClark,
+            typeName: localName(typeClark),
+            kind: typeDef.kind,
           });
         }
       } catch {
@@ -201,30 +211,33 @@ async function buildOperationIndex() {
       }
       done += 1;
       if (!searchEl.classList.contains('hidden') && searchEl.value.trim().length >= 2) {
-        setStatus(`Indexing operations ${done}/${total}…`);
+        setStatus(`Indexing ${done}/${total}…`);
       }
     }
   }
 
   const workers = Math.min(INDEX_CONCURRENCY, Math.max(1, total));
   await Promise.all(Array.from({ length: workers }, () => worker()));
-  out.sort(
+  operations.sort(
     (a, b) =>
       a.groupName.localeCompare(b.groupName) ||
       a.serviceName.localeCompare(b.serviceName) ||
       a.opName.localeCompare(b.opName),
   );
-  operationIndex = out;
-  return out;
+  types.sort(
+    (a, b) => a.typeName.localeCompare(b.typeName) || a.groupName.localeCompare(b.groupName),
+  );
+  searchIndex = { operations, types };
+  return searchIndex;
 }
 
-async function ensureOperationIndex() {
-  if (operationIndex) return operationIndex;
+async function ensureSearchIndex() {
+  if (searchIndex) return searchIndex;
   if (!indexingPromise) {
-    indexingPromise = buildOperationIndex()
+    indexingPromise = buildSearchIndex()
       .catch((err) => {
         console.warn('[d365-services] indexing failed', err);
-        return [];
+        return { operations: [], types: [] };
       })
       .finally(() => {
         indexingPromise = null;
@@ -297,6 +310,29 @@ function makeOperationRow(item, kind = 'Op') {
   return row;
 }
 
+function makeTypeRow(item) {
+  const row = document.createElement('div');
+  row.className = 'group-row';
+  const main = document.createElement('div');
+  main.className = 'group-main';
+  const name = document.createElement('div');
+  name.className = 'group-name';
+  name.textContent = item.typeName;
+  const meta = document.createElement('div');
+  meta.className = 'result-meta';
+  meta.textContent = item.groupName;
+  main.append(name, meta);
+  const label = document.createElement('span');
+  label.className = 'group-kind';
+  label.textContent = item.kind === 'enum' ? 'Enum' : 'Type';
+  const chev = document.createElement('span');
+  chev.className = 'chev';
+  chev.textContent = '›';
+  row.append(main, label, chev);
+  row.addEventListener('click', () => showTypeByName(item.groupName, item.typeClark));
+  return row;
+}
+
 async function renderList() {
   const seq = ++renderSeq;
   const q = searchEl.value.trim().toLowerCase();
@@ -305,21 +341,29 @@ async function renderList() {
   setSearchHint('');
 
   let operationMatches = [];
+  let enumMatches = [];
+  let typeMatches = [];
   if (q.length >= 2) {
-    const index = await ensureOperationIndex();
+    const index = await ensureSearchIndex();
     if (seq !== renderSeq) return;
-    operationMatches = index.filter((item) =>
+    operationMatches = index.operations.filter((item) =>
       [item.groupName, item.serviceName, item.opName].some((value) =>
         value.toLowerCase().includes(q),
       ),
     );
+    const typeNameMatches = index.types.filter((item) => item.typeName.toLowerCase().includes(q));
+    enumMatches = typeNameMatches.filter((item) => item.kind === 'enum');
+    typeMatches = typeNameMatches.filter((item) => item.kind === 'complex');
   }
 
-  if (!groupMatches.length && !operationMatches.length) {
+  const totalMatches =
+    groupMatches.length + operationMatches.length + enumMatches.length + typeMatches.length;
+
+  if (!totalMatches) {
     const empty = document.createElement('div');
     empty.className = 'empty-state';
     empty.textContent = q
-      ? `No services or operations match "${searchEl.value.trim()}".`
+      ? `Nothing matches "${searchEl.value.trim()}".`
       : 'No service groups found.';
     contentEl.append(empty);
     setStatus(q ? 'No matches' : '');
@@ -337,12 +381,22 @@ async function renderList() {
       `Operations (${operationMatches.length})`,
       operationMatches.map((item) => makeOperationRow(item)),
     );
+    appendSection(
+      contentEl,
+      `Enums (${enumMatches.length})`,
+      enumMatches.map((item) => makeTypeRow(item)),
+    );
+    appendSection(
+      contentEl,
+      `Types (${typeMatches.length})`,
+      typeMatches.map((item) => makeTypeRow(item)),
+    );
     if (q.length < 2) {
-      setSearchHint('Type one more character to also search operations');
+      setSearchHint('Type one more character to also search operations, enums, and types');
       setStatus(`${groupMatches.length} group matches`);
     } else {
       setStatus(
-        `${operationMatches.length} operation matches · ${groupMatches.length} group matches`,
+        `${operationMatches.length} operations · ${enumMatches.length} enums · ${typeMatches.length} types · ${groupMatches.length} groups`,
       );
     }
     return;
@@ -406,6 +460,28 @@ async function showOperationByName(groupName, serviceName, opName) {
   } catch (err) {
     if (mySeq !== renderSeq) return;
     reportError(err, 'Failed to load operation');
+  }
+}
+
+async function showTypeByName(groupName, typeClark) {
+  const mySeq = ++renderSeq;
+  searchEl.classList.add('hidden');
+  setBreadcrumb([
+    { label: 'Services', onClick: showListView },
+    { label: groupName, onClick: () => showDetailView(groupName) },
+    { label: localName(typeClark) },
+  ]);
+  contentEl.innerHTML = '';
+  setActions();
+  setStatus('Loading type…');
+  try {
+    const parsed = await getParsedGroup(groupName);
+    if (mySeq !== renderSeq) return;
+    if (!parsed.types[typeClark]) throw new Error(`Type ${localName(typeClark)} was not found.`);
+    showTypeView(groupName, parsed, typeClark, null);
+  } catch (err) {
+    if (mySeq !== renderSeq) return;
+    reportError(err, 'Failed to load type');
   }
 }
 
