@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Search now also indexes enums and complex types. Search results show separate "Enums" and "Types" sections (in addition to service groups and operations); clicking a result opens that type's page directly.
+
 ## [1.0.1.0] - 2026-05-13
 
 ### Added
