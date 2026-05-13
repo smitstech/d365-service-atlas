@@ -4,8 +4,9 @@ A Chrome side-panel extension for browsing and inspecting **Microsoft Dynamics 3
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-green.svg)](extension/manifest.json)
+[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/ggipaipokgbkehihhigmoeidolglkcfb?label=Chrome%20Web%20Store)](https://chromewebstore.google.com/detail/d365-service-atlas/ggipaipokgbkehihhigmoeidolglkcfb)
 
-> **Status:** Pre-release. Not yet on the Chrome Web Store — install unpacked from this repo for now.
+> **Now on the Chrome Web Store** — [install D365 Service Atlas](https://chromewebstore.google.com/detail/d365-service-atlas/ggipaipokgbkehihhigmoeidolglkcfb) directly, or load unpacked from this repo if you prefer.
 
 ## What it does
 
@@ -25,7 +26,7 @@ Everything runs locally in your browser. No data is ever sent to a third party �
 
 ### From the Chrome Web Store
 
-_Coming soon._
+[**Install D365 Service Atlas from the Chrome Web Store**](https://chromewebstore.google.com/detail/d365-service-atlas/ggipaipokgbkehihhigmoeidolglkcfb) — recommended for most users.
 
 ### Unpacked (development or pre-release use)
 
