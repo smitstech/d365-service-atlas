@@ -83,8 +83,14 @@ function renderProp(field, types, depth, visited, onTypeClick) {
 
   const targetClark = arrayItemClark || field.type;
   const isComplex = displayType?.kind === 'complex';
+  const isEnum = displayType?.kind === 'enum';
   row.append(
-    makeTypeElement(isArray ? `${typeLabel}[]` : typeLabel, targetClark, isComplex, onTypeClick),
+    makeTypeElement(
+      isArray ? `${typeLabel}[]` : typeLabel,
+      targetClark,
+      isComplex || isEnum,
+      onTypeClick,
+    ),
   );
 
   if (field.required) {
