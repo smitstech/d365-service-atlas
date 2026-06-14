@@ -19,7 +19,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Read manifest version
         id: manifest
@@ -53,14 +53,14 @@ jobs:
           ls -lh "dist/${name}"
 
       - name: Upload workflow artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.build.outputs.name }}
           path: ${{ steps.build.outputs.path }}
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: ${{ steps.build.outputs.path }}
           generate_release_notes: true
