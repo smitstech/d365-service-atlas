@@ -239,11 +239,15 @@ async function buildSearchIndex() {
   // A shared type (same namespace-qualified Clark name) is re-declared in every
   // group's WSDL. Collapse those to one entry, keeping the alphabetically-first
   // group as the representative, so search shows each type once instead of N times.
+  // `groupCount` records how many groups declare it (the type's ubiquity).
   const dedupedTypes = new Map();
   for (const t of types) {
     const existing = dedupedTypes.get(t.typeClark);
-    if (!existing || t.groupName.localeCompare(existing.groupName) < 0) {
-      dedupedTypes.set(t.typeClark, t);
+    if (!existing) {
+      dedupedTypes.set(t.typeClark, { ...t, groupCount: 1 });
+    } else {
+      existing.groupCount += 1;
+      if (t.groupName.localeCompare(existing.groupName) < 0) existing.groupName = t.groupName;
     }
   }
   const uniqueTypes = Array.from(dedupedTypes.values());
@@ -343,9 +347,13 @@ function makeOperationRow(item, kind = 'Op') {
 }
 
 function makeTypeRow(item) {
+  // A shared type lives in many groups, so the representative group name is
+  // arbitrary; show how widely it's declared instead. A type in one group keeps
+  // that group name as useful provenance.
+  const meta = item.groupCount > 1 ? `${item.groupCount} service groups` : item.groupName;
   return makeResultRow({
     name: item.typeName,
-    meta: item.groupName,
+    meta,
     label: TYPE_KIND_LABEL.get(item.kind),
     onClick: () => showTypeByName(item.groupName, item.typeClark),
   });
@@ -368,9 +376,9 @@ async function renderList() {
         value.toLowerCase().includes(q),
       ),
     );
-    typeMatches = index.types.filter((item) =>
-      [item.typeName, item.groupName].some((value) => value.toLowerCase().includes(q)),
-    );
+    // Types are deduped cross-group entities, so the representative group is
+    // arbitrary — match on the type name only.
+    typeMatches = index.types.filter((item) => item.typeName.toLowerCase().includes(q));
   }
 
   const totalMatches = groupMatches.length + operationMatches.length + typeMatches.length;
@@ -410,7 +418,7 @@ async function renderList() {
       setStatus(`${groupMatches.length} group matches`);
     } else {
       setStatus(
-        `${operationMatches.length} operations · ${typeMatches.length} types · ${groupMatches.length} groups`,
+        `${groupMatches.length} groups · ${operationMatches.length} operations · ${typeMatches.length} types`,
       );
     }
     return;
