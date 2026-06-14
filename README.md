@@ -18,7 +18,7 @@ When you open the side panel on a Dynamics 365 F&O tab (`*.operations.dynamics.c
 - Show an auto-generated **example request body** as JSON.
 - Copy ready-to-paste **`curl` or `fetch` snippets** for any operation.
 - Export an entire service group as an **OpenAPI 3.0** document.
-- **Search** across services and operations once the index has built.
+- **Search** across service groups, operations, enums, and complex types once the index has built — jump straight to a type's page from the results.
 
 Everything runs locally in your browser. No data is ever sent to a third party — see [PRIVACY.md](PRIVACY.md).
 

@@ -1,6 +1,6 @@
 {
   "name": "d365-service-atlas",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "private": true,
   "description": "Chrome side-panel extension for browsing Dynamics 365 Finance & Operations service groups, services, operations, and types.",
   "license": "MIT",
