@@ -139,7 +139,7 @@ function renderSection(title, child) {
   return section;
 }
 
-export function renderTypePage(container, typeClark, parsed, onTypeClick, onUsageClick) {
+export function renderTypePage(container, typeClark, parsed, groupName, onTypeClick, onUsageClick) {
   container.innerHTML = '';
   const typeDef = parsed.types[typeClark];
 
@@ -173,8 +173,11 @@ export function renderTypePage(container, typeClark, parsed, onTypeClick, onUsag
 
   const usages = findUsages(typeClark, parsed);
   if (usages.length) {
-    container.append(
-      renderSection(`Used by (${usages.length})`, renderUsages(usages, onUsageClick)),
-    );
+    // Usages are scoped to this one service group's WSDL (a shared type lives in
+    // many groups); make that explicit so the list doesn't read as environment-wide.
+    const title = groupName
+      ? `Used by (${usages.length}) · ${groupName}`
+      : `Used by (${usages.length})`;
+    container.append(renderSection(title, renderUsages(usages, onUsageClick)));
   }
 }

@@ -544,6 +544,7 @@ function showTypeView(groupName, parsed, typeClark, fromOp) {
     contentEl,
     typeClark,
     parsed,
+    groupName,
     (nextType) => showTypeView(groupName, parsed, nextType, fromOp),
     (op) => showOperationView(groupName, op, parsed),
   );
