@@ -6,7 +6,7 @@ import {
   NotSignedInError,
   HttpError,
 } from './api.js';
-import { parseWsdl, localName } from './wsdl-parser.js';
+import { parseWsdl, localName, isArrayWrapper } from './wsdl-parser.js';
 import { renderSwagger } from './swagger-view.js';
 import { renderOperationPage } from './operation-view.js';
 import { renderTypePage } from './type-view.js';
@@ -24,7 +24,7 @@ const titleMarkEl = document.querySelector('.title-mark');
 
 let allGroups = [];
 let currentEnv = null;
-let operationIndex = null;
+let searchIndex = null;
 let indexingPromise = null;
 let renderSeq = 0;
 let searchTimer = null;
@@ -63,10 +63,10 @@ function updateSearchPlaceholder() {
   if (!allGroups.length) {
     searchEl.placeholder = currentEnv
       ? `Search services in ${envShortName(currentEnv)}...`
-      : 'Search service groups...';
+      : 'Search groups, operations, types...';
     return;
   }
-  searchEl.placeholder = `Search ${allGroups.length} service groups...`;
+  searchEl.placeholder = `Search ${allGroups.length} groups, operations, types...`;
 }
 
 function downloadJson(filename, data) {
@@ -176,8 +176,18 @@ async function getParsedGroup(groupName) {
 
 const INDEX_CONCURRENCY = 6;
 
-async function buildOperationIndex() {
-  const out = [];
+// Single source of truth for which parsed-type kinds are searchable and how they
+// surface: `kind` matches typeDef.kind, `label` is the per-row badge, `section`
+// is the results heading. Add an entry here to make a new kind searchable.
+const SEARCHABLE_TYPE_KINDS = [
+  { kind: 'enum', label: 'Enum', section: 'Enums' },
+  { kind: 'complex', label: 'Type', section: 'Types' },
+];
+const TYPE_KIND_LABEL = new Map(SEARCHABLE_TYPE_KINDS.map((k) => [k.kind, k.label]));
+
+async function buildSearchIndex() {
+  const operations = [];
+  const types = [];
   const total = allGroups.length;
   let cursor = 0;
   let done = 0;
@@ -189,11 +199,23 @@ async function buildOperationIndex() {
       try {
         const parsed = await getParsedGroup(g.Name);
         for (const op of parsed.operations) {
-          out.push({
+          operations.push({
             groupName: g.Name,
             serviceName: op.serviceName,
             opName: op.name,
             op,
+          });
+        }
+        for (const [typeClark, typeDef] of Object.entries(parsed.types)) {
+          if (!TYPE_KIND_LABEL.has(typeDef.kind)) continue;
+          // Skip generated array-wrapper complex types (e.g. ArrayOfFoo); they
+          // are plumbing, not types a user navigates to.
+          if (isArrayWrapper(typeDef)) continue;
+          types.push({
+            groupName: g.Name,
+            typeClark,
+            typeName: localName(typeClark),
+            kind: typeDef.kind,
           });
         }
       } catch {
@@ -201,30 +223,48 @@ async function buildOperationIndex() {
       }
       done += 1;
       if (!searchEl.classList.contains('hidden') && searchEl.value.trim().length >= 2) {
-        setStatus(`Indexing operations ${done}/${total}…`);
+        setStatus(`Indexing ${done}/${total}…`);
       }
     }
   }
 
   const workers = Math.min(INDEX_CONCURRENCY, Math.max(1, total));
   await Promise.all(Array.from({ length: workers }, () => worker()));
-  out.sort(
+  operations.sort(
     (a, b) =>
       a.groupName.localeCompare(b.groupName) ||
       a.serviceName.localeCompare(b.serviceName) ||
       a.opName.localeCompare(b.opName),
   );
-  operationIndex = out;
-  return out;
+  // A shared type (same namespace-qualified Clark name) is re-declared in every
+  // group's WSDL. Collapse those to one entry, keeping the alphabetically-first
+  // group as the representative, so search shows each type once instead of N times.
+  // `groupCount` records how many groups declare it (the type's ubiquity).
+  const dedupedTypes = new Map();
+  for (const t of types) {
+    const existing = dedupedTypes.get(t.typeClark);
+    if (!existing) {
+      dedupedTypes.set(t.typeClark, { ...t, groupCount: 1 });
+    } else {
+      existing.groupCount += 1;
+      if (t.groupName.localeCompare(existing.groupName) < 0) existing.groupName = t.groupName;
+    }
+  }
+  const uniqueTypes = Array.from(dedupedTypes.values());
+  uniqueTypes.sort(
+    (a, b) => a.typeName.localeCompare(b.typeName) || a.groupName.localeCompare(b.groupName),
+  );
+  searchIndex = { operations, types: uniqueTypes };
+  return searchIndex;
 }
 
-async function ensureOperationIndex() {
-  if (operationIndex) return operationIndex;
+async function ensureSearchIndex() {
+  if (searchIndex) return searchIndex;
   if (!indexingPromise) {
-    indexingPromise = buildOperationIndex()
+    indexingPromise = buildSearchIndex()
       .catch((err) => {
         console.warn('[d365-services] indexing failed', err);
-        return [];
+        return { operations: [], types: [] };
       })
       .finally(() => {
         indexingPromise = null;
@@ -272,29 +312,51 @@ function makeGroupRow(groupName) {
   return row;
 }
 
-function makeOperationRow(item, kind = 'Op') {
+// Shared builder for the search-result rows (operations and types). Each row is
+// a name + meta line, a kind badge, and a chevron, wired to an onClick handler.
+function makeResultRow({ name, meta, label, onClick }) {
   const row = document.createElement('div');
   row.className = 'group-row';
   const main = document.createElement('div');
   main.className = 'group-main';
-  const name = document.createElement('div');
-  name.className = 'group-name';
-  name.textContent = `/${item.opName}`;
-  const meta = document.createElement('div');
-  meta.className = 'result-meta';
-  meta.textContent = `${item.groupName} · ${item.serviceName}`;
-  main.append(name, meta);
-  const label = document.createElement('span');
-  label.className = 'group-kind';
-  label.textContent = kind;
+  const nameEl = document.createElement('div');
+  nameEl.className = 'group-name';
+  nameEl.textContent = name;
+  const metaEl = document.createElement('div');
+  metaEl.className = 'result-meta';
+  metaEl.textContent = meta;
+  main.append(nameEl, metaEl);
+  const labelEl = document.createElement('span');
+  labelEl.className = 'group-kind';
+  labelEl.textContent = label;
   const chev = document.createElement('span');
   chev.className = 'chev';
   chev.textContent = '›';
-  row.append(main, label, chev);
-  row.addEventListener('click', () =>
-    showOperationByName(item.groupName, item.serviceName, item.opName),
-  );
+  row.append(main, labelEl, chev);
+  row.addEventListener('click', onClick);
   return row;
+}
+
+function makeOperationRow(item, kind = 'Op') {
+  return makeResultRow({
+    name: `/${item.opName}`,
+    meta: `${item.groupName} · ${item.serviceName}`,
+    label: kind,
+    onClick: () => showOperationByName(item.groupName, item.serviceName, item.opName),
+  });
+}
+
+function makeTypeRow(item) {
+  // A shared type lives in many groups, so the representative group name is
+  // arbitrary; show how widely it's declared instead. A type in one group keeps
+  // that group name as useful provenance.
+  const meta = item.groupCount > 1 ? `${item.groupCount} service groups` : item.groupName;
+  return makeResultRow({
+    name: item.typeName,
+    meta,
+    label: TYPE_KIND_LABEL.get(item.kind),
+    onClick: () => showTypeByName(item.groupName, item.typeClark),
+  });
 }
 
 async function renderList() {
@@ -305,21 +367,27 @@ async function renderList() {
   setSearchHint('');
 
   let operationMatches = [];
+  let typeMatches = [];
   if (q.length >= 2) {
-    const index = await ensureOperationIndex();
+    const index = await ensureSearchIndex();
     if (seq !== renderSeq) return;
-    operationMatches = index.filter((item) =>
+    operationMatches = index.operations.filter((item) =>
       [item.groupName, item.serviceName, item.opName].some((value) =>
         value.toLowerCase().includes(q),
       ),
     );
+    // Types are deduped cross-group entities, so the representative group is
+    // arbitrary — match on the type name only.
+    typeMatches = index.types.filter((item) => item.typeName.toLowerCase().includes(q));
   }
 
-  if (!groupMatches.length && !operationMatches.length) {
+  const totalMatches = groupMatches.length + operationMatches.length + typeMatches.length;
+
+  if (!totalMatches) {
     const empty = document.createElement('div');
     empty.className = 'empty-state';
     empty.textContent = q
-      ? `No services or operations match "${searchEl.value.trim()}".`
+      ? `Nothing matches "${searchEl.value.trim()}".`
       : 'No service groups found.';
     contentEl.append(empty);
     setStatus(q ? 'No matches' : '');
@@ -337,12 +405,20 @@ async function renderList() {
       `Operations (${operationMatches.length})`,
       operationMatches.map((item) => makeOperationRow(item)),
     );
+    for (const { kind, section } of SEARCHABLE_TYPE_KINDS) {
+      const kindMatches = typeMatches.filter((item) => item.kind === kind);
+      appendSection(
+        contentEl,
+        `${section} (${kindMatches.length})`,
+        kindMatches.map((item) => makeTypeRow(item)),
+      );
+    }
     if (q.length < 2) {
-      setSearchHint('Type one more character to also search operations');
+      setSearchHint('Type one more character to also search operations, enums, and types');
       setStatus(`${groupMatches.length} group matches`);
     } else {
       setStatus(
-        `${operationMatches.length} operation matches · ${groupMatches.length} group matches`,
+        `${groupMatches.length} groups · ${operationMatches.length} operations · ${typeMatches.length} types`,
       );
     }
     return;
@@ -409,6 +485,28 @@ async function showOperationByName(groupName, serviceName, opName) {
   }
 }
 
+async function showTypeByName(groupName, typeClark) {
+  const mySeq = ++renderSeq;
+  searchEl.classList.add('hidden');
+  setBreadcrumb([
+    { label: 'Services', onClick: showListView },
+    { label: groupName, onClick: () => showDetailView(groupName) },
+    { label: localName(typeClark) },
+  ]);
+  contentEl.innerHTML = '';
+  setActions();
+  setStatus('Loading type…');
+  try {
+    const parsed = await getParsedGroup(groupName);
+    if (mySeq !== renderSeq) return;
+    if (!parsed.types[typeClark]) throw new Error(`Type ${localName(typeClark)} was not found.`);
+    showTypeView(groupName, parsed, typeClark, null);
+  } catch (err) {
+    if (mySeq !== renderSeq) return;
+    reportError(err, 'Failed to load type');
+  }
+}
+
 function showOperationView(groupName, op, parsed) {
   renderSeq += 1;
   searchEl.classList.add('hidden');
@@ -454,6 +552,7 @@ function showTypeView(groupName, parsed, typeClark, fromOp) {
     contentEl,
     typeClark,
     parsed,
+    groupName,
     (nextType) => showTypeView(groupName, parsed, nextType, fromOp),
     (op) => showOperationView(groupName, op, parsed),
   );
