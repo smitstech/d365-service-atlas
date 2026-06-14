@@ -6,9 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.1.0.0] - 2026-06-14
+
 ### Added
 
-- Search now also indexes enums and complex types. Search results show separate "Enums" and "Types" sections (in addition to service groups and operations); clicking a result opens that type's page directly.
+- Search now also indexes enums and complex types, shown as separate "Enums" and "Types" sections alongside service groups and operations; clicking a result opens that type's page directly. Types shared across many service groups are collapsed to a single result labelled with how many groups declare it, and generated array-wrapper types are omitted.
+- Enum and complex-type references in operation and type schemas are now clickable, navigating to the referenced type's page (enums included, array-of-enum fields too).
+
+### Changed
+
+- A type's "Used by" list is now labelled with the service group it was opened from, since usages are scoped to that group's WSDL.
+- The search result summary is ordered groups · operations · types to match the result sections.
 
 ## [1.0.1.0] - 2026-05-13
 
